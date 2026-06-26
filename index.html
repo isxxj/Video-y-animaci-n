@@ -83,9 +83,20 @@
     background: #000;
   }
 
-  video {
-    width: 100%; height: 100%;
-    object-fit: cover;
+  /* YouTube iframe container */
+  .yt-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: none;
+  }
+  .yt-container.active {
+    display: block;
+  }
+  .yt-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
     display: block;
   }
 
@@ -208,8 +219,9 @@
     transition: background-color 0.3s ease;
   }
   .seg.done .seg-fill { width: 100%; }
-  .seg.active .seg-fill { background: var(--cy); }
+  .seg.active .seg-fill { background: var(--cy); width: 100%; animation: segAnim 0.4s ease forwards; }
   .seg.done .seg-fill { background: rgba(255,255,255,0.5); }
+  @keyframes segAnim { from { width: 0; } to { width: 100%; } }
 
   /* ── THUMBNAIL STRIP ── */
   .strip {
@@ -239,16 +251,18 @@
     cursor: pointer;
     border: 2px solid transparent;
     transition: transform 0.25s ease, border-color 0.25s ease;
+    background: #1a1a1a;
   }
   .thumb:hover { transform: scale(1.05); }
   .thumb.active {
     border-color: var(--mg);
     transform: scale(1.06);
   }
-  .thumb video {
+  .thumb img {
     width: 100%; height: 100%;
     object-fit: cover;
     pointer-events: none;
+    display: block;
   }
   .thumb-label {
     position: absolute;
@@ -306,9 +320,6 @@
   .ctrl-btn svg { width: 18px; height: 18px; }
   .ctrl-btn.play-pause { width: 52px; height: 52px; }
   .ctrl-btn.play-pause svg { width: 22px; height: 22px; }
-
-  /* ── MUTE ICON ── */
-  .vol-btn {}
 
   /* ── TRANSITION FLASH ── */
   .flash {
@@ -375,27 +386,35 @@
     color: var(--muted);
   }
 
-  /* ── NO VIDEO STATE ── */
-  .no-video-msg {
+  /* ── YT PLAY HINT ── */
+  .yt-hint {
     position: fixed;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 15;
-    text-align: center;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
   }
-  .no-video-msg h2 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 18px;
-    font-weight: 500;
+  .yt-hint.show { opacity: 1; }
+  .yt-hint-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .yt-hint-icon svg { width: 28px; height: 28px; fill: var(--cy); }
+  .yt-hint p {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 8px;
-  }
-  .no-video-msg p {
-    font-size: 12px;
-    color: rgba(240,240,240,0.25);
-    max-width: 300px;
-    line-height: 1.6;
   }
 </style>
 </head>
@@ -415,25 +434,25 @@
 <header>
   <div class="logo">
     <div class="logo-dot"></div>
-    TU NOMBRE
+    ISABELA
   </div>
   <div class="header-right">
-    <div class="counter">Video <span id="curNum">01</span> / <span id="totNum">00</span></div>
+    <div class="counter">Video <span id="curNum">01</span> / <span id="totNum">05</span></div>
   </div>
 </header>
 
-<!-- Video stage -->
-<div class="stage">
-  <video id="mainVideo" playsinline></video>
-</div>
+<!-- Video stage: YouTube iframes -->
+<div class="stage" id="stage"></div>
 
 <!-- Overlay gradient -->
 <div class="overlay"></div>
 
-<!-- No video message (shown when no videos loaded) -->
-<div class="no-video-msg" id="noVideoMsg">
-  <h2>Arrastra tus videos aquí</h2>
-  <p>O usa el botón <strong style="color:var(--cy)">+ Agregar Videos</strong> abajo para cargar tus archivos .mp4</p>
+<!-- Play hint -->
+<div class="yt-hint" id="ytHint">
+  <div class="yt-hint-icon">
+    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+  </div>
+  <p>Haz clic para reproducir</p>
 </div>
 
 <!-- Info panel -->
@@ -450,10 +469,6 @@
       <span class="meta-label">Categoría</span>
       <span class="meta-value" id="metaCat">—</span>
     </div>
-    <div class="meta-item">
-      <span class="meta-label">Duración</span>
-      <span class="meta-value" id="metaDur">—</span>
-    </div>
   </div>
 </div>
 
@@ -469,9 +484,9 @@
       <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
     </svg>
   </button>
-  <button class="ctrl-btn play-pause" id="playBtn" title="Play / Pausa">
+  <button class="ctrl-btn play-pause" id="playBtn" title="Abrir en YouTube">
     <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
-      <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
+      <polygon points="5 3 19 12 5 21 5 3"/>
     </svg>
   </button>
   <button class="ctrl-btn" id="prevBtn" title="Anterior">
@@ -479,140 +494,153 @@
       <polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/>
     </svg>
   </button>
-  <button class="ctrl-btn" id="muteBtn" title="Silenciar">
-    <svg id="muteIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-    </svg>
-  </button>
-  <button class="ctrl-btn" id="addBtn" title="Agregar videos" style="border-color:rgba(0,229,255,0.3); color:var(--cy);">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-    </svg>
-  </button>
 </div>
 
 <!-- Thumbnail strip -->
 <div class="strip" id="strip"></div>
 
-<!-- Hidden file input -->
-<input type="file" id="fileInput" accept="video/mp4,video/*" multiple style="display:none">
-
 <script>
-const ACCENT_COLORS = ['#FF2D6B','#00E5FF','#FFE135','#A855F7','#22D3EE','#F97316'];
+const ACCENT_COLORS = ['#FF2D6B','#00E5FF','#FFE135','#A855F7','#22D3EE'];
 
-const state = {
-  videos: [],   // { file, url, name, duration }
-  current: 0,
-  playing: false,
-  muted: false,
-};
+// ── VIDEO DATA ──────────────────────────────────────────────────────────────
+const VIDEOS = [
+  {
+    id: 'EOPnI3Dpbso',
+    name: 'Coca Cola',
+    cat: 'Publicidad',
+    year: '2024',
+    desc: 'Spot publicitario para Coca-Cola.'
+  },
+  {
+    id: 'XJW-NLLdACQ',
+    name: 'Puma',
+    cat: 'Publicidad',
+    year: '2024',
+    desc: 'Campaña de marca para Puma.'
+  },
+  {
+    id: 'zQl8AINmlUI',
+    name: 'Kylie Cosmetics',
+    cat: 'Beauty',
+    year: '2024',
+    desc: 'Producción audiovisual para Kylie Cosmetics.'
+  },
+  {
+    id: 'syM7b_TYWtM',
+    name: 'Popeyes',
+    cat: 'Publicidad',
+    year: '2024',
+    desc: 'Campaña digital para Popeyes.'
+  },
+  {
+    id: '-V7dpXG3ouY',
+    name: 'Circuito de una Ardilla',
+    cat: 'Motion',
+    year: '2024',
+    desc: 'Proyecto creativo: Circuito de una ardilla.'
+  }
+];
 
-const mainVideo = document.getElementById('mainVideo');
-const segBar    = document.getElementById('segBar');
-const strip     = document.getElementById('strip');
-const infoPanel = document.getElementById('infoPanel');
-const playBtn   = document.getElementById('playBtn');
-const playIcon  = document.getElementById('playIcon');
-const muteIcon  = document.getElementById('muteIcon');
-const flash     = document.getElementById('flash');
-const noMsg     = document.getElementById('noVideoMsg');
+const state = { current: 0 };
 
-// ── LOADING SCREEN
-setTimeout(() => document.getElementById('loadScreen').classList.add('gone'), 1400);
+const stage   = document.getElementById('stage');
+const segBar  = document.getElementById('segBar');
+const strip   = document.getElementById('strip');
+const flash   = document.getElementById('flash');
+const ytHint  = document.getElementById('ytHint');
 
-// ── FILE INPUT
-document.getElementById('addBtn').addEventListener('click', () => document.getElementById('fileInput').click());
-document.getElementById('fileInput').addEventListener('change', e => handleFiles(Array.from(e.target.files)));
+// ── BUILD iframes ────────────────────────────────────────────────────────────
+VIDEOS.forEach((v, i) => {
+  const wrap = document.createElement('div');
+  wrap.className = 'yt-container' + (i === 0 ? ' active' : '');
+  wrap.id = 'yt-' + i;
 
-// ── DRAG & DROP on body
-document.body.addEventListener('dragover', e => e.preventDefault());
-document.body.addEventListener('drop', e => {
-  e.preventDefault();
-  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('video/'));
-  if (files.length) handleFiles(files);
+  const iframe = document.createElement('iframe');
+  iframe.src = `https://www.youtube.com/embed/${v.id}?autoplay=${i === 0 ? 1 : 0}&mute=1&loop=1&playlist=${v.id}&controls=1&rel=0&modestbranding=1&enablejsapi=1`;
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+  iframe.allowFullscreen = true;
+
+  wrap.appendChild(iframe);
+  stage.appendChild(wrap);
 });
 
-function handleFiles(files) {
-  files.forEach(file => {
-    const url = URL.createObjectURL(file);
-    const name = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-    state.videos.push({ file, url, name, duration: 0, cat: 'Motion', year: new Date().getFullYear() });
-  });
-  buildUI();
-  if (state.videos.length === files.length) loadVideo(0); // first batch
-}
-
-// ── BUILD UI
-function buildUI() {
-  noMsg.style.display = state.videos.length ? 'none' : 'block';
-
-  // Segments
+// ── BUILD segments ───────────────────────────────────────────────────────────
+function buildSegments() {
   segBar.innerHTML = '';
-  state.videos.forEach((v, i) => {
+  VIDEOS.forEach((v, i) => {
     const seg = document.createElement('div');
     seg.className = 'seg' + (i === state.current ? ' active' : i < state.current ? ' done' : '');
     seg.innerHTML = '<div class="seg-fill"></div>';
     seg.addEventListener('click', () => loadVideo(i));
     segBar.appendChild(seg);
   });
+}
 
-  // Thumbnails
+// ── BUILD thumbnails ─────────────────────────────────────────────────────────
+function buildThumbs() {
   strip.innerHTML = '';
-  state.videos.forEach((v, i) => {
+  VIDEOS.forEach((v, i) => {
     const thumb = document.createElement('div');
     thumb.className = 'thumb' + (i === state.current ? ' active' : '');
-    thumb.innerHTML = `
-      <video src="${v.url}" muted preload="metadata" style="pointer-events:none;"></video>
-      <div class="thumb-num">${String(i+1).padStart(2,'0')}</div>
-      <div class="thumb-label">${v.name}</div>
-    `;
-    // Seek thumbnail to 10%
-    const tv = thumb.querySelector('video');
-    tv.addEventListener('loadedmetadata', () => { tv.currentTime = tv.duration * 0.1; });
+
+    const img = document.createElement('img');
+    img.src = `https://img.youtube.com/vi/${v.id}/mqdefault.jpg`;
+    img.alt = v.name;
+    img.loading = 'lazy';
+
+    const num = document.createElement('div');
+    num.className = 'thumb-num';
+    num.textContent = String(i + 1).padStart(2, '0');
+
+    const label = document.createElement('div');
+    label.className = 'thumb-label';
+    label.textContent = v.name;
+
+    thumb.appendChild(img);
+    thumb.appendChild(num);
+    thumb.appendChild(label);
     thumb.addEventListener('click', () => loadVideo(i));
     strip.appendChild(thumb);
   });
-
-  document.getElementById('totNum').textContent = String(state.videos.length).padStart(2,'0');
 }
 
-// ── LOAD VIDEO
+// ── LOAD VIDEO ───────────────────────────────────────────────────────────────
 function loadVideo(i) {
-  if (!state.videos.length) return;
+  const prev = state.current;
   state.current = i;
-  const v = state.videos[i];
 
   // Flash
   flash.classList.add('show');
   setTimeout(() => flash.classList.remove('show'), 200);
 
-  mainVideo.src = v.url;
-  mainVideo.muted = state.muted;
+  // Switch iframe visibility
+  document.querySelectorAll('.yt-container').forEach((el, idx) => {
+    el.classList.toggle('active', idx === i);
+  });
 
-  mainVideo.addEventListener('loadedmetadata', () => {
-    v.duration = mainVideo.duration;
-    document.getElementById('metaDur').textContent = fmtTime(v.duration);
-  }, { once: true });
+  // Autoplay new iframe by reloading its src with autoplay=1
+  const newIframe = document.querySelector(`#yt-${i} iframe`);
+  const v = VIDEOS[i];
+  newIframe.src = `https://www.youtube.com/embed/${v.id}?autoplay=1&mute=0&loop=1&playlist=${v.id}&controls=1&rel=0&modestbranding=1&enablejsapi=1`;
 
-  mainVideo.play().then(() => {
-    state.playing = true;
-    updatePlayIcon();
-  }).catch(() => {});
+  // Mute previous (reset src without autoplay)
+  if (prev !== i) {
+    const oldIframe = document.querySelector(`#yt-${prev} iframe`);
+    const vp = VIDEOS[prev];
+    oldIframe.src = `https://www.youtube.com/embed/${vp.id}?autoplay=0&mute=1&controls=1&rel=0&modestbranding=1`;
+  }
 
   updateInfo(v, i);
   updateActiveUI(i);
 }
 
 function updateInfo(v, i) {
-  document.getElementById('infoTag').textContent = `${String(i+1).padStart(2,'0')} / ${String(state.videos.length).padStart(2,'0')}`;
+  document.getElementById('infoTag').textContent = `${String(i+1).padStart(2,'0')} / ${String(VIDEOS.length).padStart(2,'0')}`;
   document.getElementById('infoTitle').textContent = v.name;
-  document.getElementById('infoDesc').textContent = v.desc || 'Agrega una descripción editando el código.';
+  document.getElementById('infoDesc').textContent = v.desc || '';
   document.getElementById('metaYear').textContent = v.year || '—';
   document.getElementById('metaCat').textContent = v.cat || '—';
-  document.getElementById('metaDur').textContent = v.duration ? fmtTime(v.duration) : '—';
   document.getElementById('curNum').textContent = String(i+1).padStart(2,'0');
-  // Accent color cycle
   document.documentElement.style.setProperty('--mg', ACCENT_COLORS[i % ACCENT_COLORS.length]);
 }
 
@@ -623,67 +651,32 @@ function updateActiveUI(i) {
   document.querySelectorAll('.thumb').forEach((t, idx) => {
     t.className = 'thumb' + (idx === i ? ' active' : '');
   });
-  // Scroll thumbnail into view
   const thumbs = strip.querySelectorAll('.thumb');
   if (thumbs[i]) thumbs[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 }
 
-// ── PROGRESS
-mainVideo.addEventListener('timeupdate', () => {
-  const seg = segBar.querySelectorAll('.seg')[state.current];
-  if (!seg || !mainVideo.duration) return;
-  const pct = (mainVideo.currentTime / mainVideo.duration) * 100;
-  seg.querySelector('.seg-fill').style.width = pct + '%';
-});
-
-// ── AUTOPLAY NEXT
-mainVideo.addEventListener('ended', () => {
-  const next = state.current + 1;
-  if (next < state.videos.length) {
-    loadVideo(next);
-  } else {
-    loadVideo(0); // loop back
-  }
-});
-
-// ── CONTROLS
-document.getElementById('playBtn').addEventListener('click', () => {
-  if (mainVideo.paused) { mainVideo.play(); state.playing = true; }
-  else { mainVideo.pause(); state.playing = false; }
-  updatePlayIcon();
-});
-
+// ── CONTROLS ─────────────────────────────────────────────────────────────────
 document.getElementById('nextBtn').addEventListener('click', () => {
-  loadVideo((state.current + 1) % state.videos.length);
+  loadVideo((state.current + 1) % VIDEOS.length);
 });
-
 document.getElementById('prevBtn').addEventListener('click', () => {
-  loadVideo((state.current - 1 + state.videos.length) % state.videos.length);
+  loadVideo((state.current - 1 + VIDEOS.length) % VIDEOS.length);
+});
+document.getElementById('playBtn').addEventListener('click', () => {
+  // Reload with autoplay to ensure playback (also unmuted)
+  const v = VIDEOS[state.current];
+  const iframe = document.querySelector(`#yt-${state.current} iframe`);
+  iframe.src = `https://www.youtube.com/embed/${v.id}?autoplay=1&mute=0&controls=1&rel=0&modestbranding=1&loop=1&playlist=${v.id}`;
 });
 
-document.getElementById('muteBtn').addEventListener('click', () => {
-  state.muted = !state.muted;
-  mainVideo.muted = state.muted;
-  muteIcon.style.opacity = state.muted ? '0.3' : '1';
-});
-
-function updatePlayIcon() {
-  if (state.playing) {
-    playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>';
-  } else {
-    playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>';
-  }
-}
-
-// ── KEYBOARD
+// ── KEYBOARD ──────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' || e.key === 'n') document.getElementById('nextBtn').click();
   if (e.key === 'ArrowLeft'  || e.key === 'p') document.getElementById('prevBtn').click();
-  if (e.key === ' ') { e.preventDefault(); document.getElementById('playBtn').click(); }
-  if (e.key === 'm') document.getElementById('muteBtn').click();
 });
 
-// ── HIDE INFO ON IDLE
+// ── HIDE INFO ON IDLE ─────────────────────────────────────────────────────────
+const infoPanel = document.getElementById('infoPanel');
 let idleTimer;
 function resetIdle() {
   infoPanel.classList.remove('hidden');
@@ -694,12 +687,11 @@ document.addEventListener('mousemove', resetIdle);
 document.addEventListener('touchstart', resetIdle);
 resetIdle();
 
-// ── UTILS
-function fmtTime(s) {
-  const m = Math.floor(s / 60);
-  const ss = Math.floor(s % 60);
-  return `${m}:${ss.toString().padStart(2,'0')}`;
-}
+// ── INIT ──────────────────────────────────────────────────────────────────────
+setTimeout(() => document.getElementById('loadScreen').classList.add('gone'), 1400);
+buildSegments();
+buildThumbs();
+updateInfo(VIDEOS[0], 0);
 </script>
 </body>
 </html>
