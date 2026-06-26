@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio · Reel</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --mg: #FF2D6B;
+    --cy: #00E5FF;
+    --yw: #FFE135;
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --txt: #f0f0f0;
+    --muted: rgba(240,240,240,0.45);
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--txt);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    background: linear-gradient(to bottom, rgba(10,10,10,0.95) 0%, transparent 100%);
+  }
+
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: var(--txt);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--mg);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .counter {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .counter span { color: var(--cy); }
+
+  /* ── VIDEO STAGE ── */
+  .stage {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background: #000;
+  }
+
+  video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* ── OVERLAY ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    background: 
+      linear-gradient(to top, rgba(10,10,10,0.92) 0%, rgba(10,10,10,0.2) 30%, transparent 60%),
+      linear-gradient(to bottom, rgba(10,10,10,0.7) 0%, transparent 20%);
+  }
+
+  /* ── INFO PANEL ── */
+  .info {
+    position: fixed;
+    bottom: 160px;
+    left: 32px;
+    z-index: 20;
+    max-width: 480px;
+    transform: translateY(0);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+  }
+  .info.hidden {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  .info-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--mg);
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+  }
+
+  .info-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+    color: var(--txt);
+    margin-bottom: 10px;
+  }
+
+  .info-desc {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--muted);
+    max-width: 380px;
+  }
+
+  .info-meta {
+    margin-top: 14px;
+    display: flex;
+    gap: 20px;
+  }
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .meta-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .meta-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cy);
+  }
+
+  /* ── TIMELINE / PROGRESS ── */
+  .timeline-wrap {
+    position: fixed;
+    bottom: 130px;
+    left: 32px;
+    right: 32px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .progress-segments {
+    display: flex;
+    gap: 3px;
+    height: 3px;
+  }
+  .seg {
+    flex: 1;
+    background: rgba(255,255,255,0.12);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .seg:hover { transform: scaleY(2.5); }
+  .seg-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    transition: background-color 0.3s ease;
+  }
+  .seg.done .seg-fill { width: 100%; }
+  .seg.active .seg-fill { background: var(--cy); }
+  .seg.done .seg-fill { background: rgba(255,255,255,0.5); }
+
+  /* ── THUMBNAIL STRIP ── */
+  .strip {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    height: 120px;
+    padding: 12px 32px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: linear-gradient(to top, rgba(10,10,10,0.98) 0%, rgba(10,10,10,0.7) 100%);
+  }
+  .strip::-webkit-scrollbar { display: none; }
+
+  .thumb {
+    flex-shrink: 0;
+    width: 130px;
+    height: 82px;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .thumb:hover { transform: scale(1.05); }
+  .thumb.active {
+    border-color: var(--mg);
+    transform: scale(1.06);
+  }
+  .thumb video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+  .thumb-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 4px 8px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.9);
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .thumb-num {
+    position: absolute;
+    top: 6px; left: 6px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.5);
+  }
+  .thumb.active .thumb-num { color: var(--mg); }
+
+  /* ── CONTROLS ── */
+  .controls {
+    position: fixed;
+    bottom: 145px;
+    right: 32px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .ctrl-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    color: var(--txt);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    backdrop-filter: blur(4px);
+  }
+  .ctrl-btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.4);
+    transform: scale(1.08);
+  }
+  .ctrl-btn svg { width: 18px; height: 18px; }
+  .ctrl-btn.play-pause { width: 52px; height: 52px; }
+  .ctrl-btn.play-pause svg { width: 22px; height: 22px; }
+
+  /* ── MUTE ICON ── */
+  .vol-btn {}
+
+  /* ── TRANSITION FLASH ── */
+  .flash {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: var(--mg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+  }
+  .flash.show { opacity: 0.12; }
+
+  /* ── LOADING ── */
+  .loading-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    transition: opacity 0.6s ease;
+  }
+  .loading-screen.gone {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .loading-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    color: var(--txt);
+  }
+  .loading-logo em {
+    font-style: normal;
+    color: var(--mg);
+  }
+  .loading-bar {
+    width: 200px;
+    height: 2px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .loading-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mg), var(--cy));
+    border-radius: 1px;
+    animation: loadAnim 1.2s ease forwards;
+  }
+  @keyframes loadAnim {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+  .loading-hint {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── NO VIDEO STATE ── */
+  .no-video-msg {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 15;
+    text-align: center;
+    pointer-events: none;
+  }
+  .no-video-msg h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .no-video-msg p {
+    font-size: 12px;
+    color: rgba(240,240,240,0.25);
+    max-width: 300px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div class="loading-screen" id="loadScreen">
+  <div class="loading-logo">PORT<em>·</em>FOLIO</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+  <div class="loading-hint">Cargando reel</div>
+</div>
+
+<!-- Flash transition -->
+<div class="flash" id="flash"></div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    TU NOMBRE
+  </div>
+  <div class="header-right">
+    <div class="counter">Video <span id="curNum">01</span> / <span id="totNum">00</span></div>
+  </div>
+</header>
+
+<!-- Video stage -->
+<div class="stage">
+  <video id="mainVideo" playsinline></video>
+</div>
+
+<!-- Overlay gradient -->
+<div class="overlay"></div>
+
+<!-- No video message (shown when no videos loaded) -->
+<div class="no-video-msg" id="noVideoMsg">
+  <h2>Arrastra tus videos aquí</h2>
+  <p>O usa el botón <strong style="color:var(--cy)">+ Agregar Videos</strong> abajo para cargar tus archivos .mp4</p>
+</div>
+
+<!-- Info panel -->
+<div class="info" id="infoPanel">
+  <div class="info-tag" id="infoTag">REEL</div>
+  <div class="info-title" id="infoTitle">Sin título</div>
+  <div class="info-desc" id="infoDesc">—</div>
+  <div class="info-meta">
+    <div class="meta-item">
+      <span class="meta-label">Año</span>
+      <span class="meta-value" id="metaYear">—</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Categoría</span>
+      <span class="meta-value" id="metaCat">—</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Duración</span>
+      <span class="meta-value" id="metaDur">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- Timeline -->
+<div class="timeline-wrap">
+  <div class="progress-segments" id="segBar"></div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="ctrl-btn" id="nextBtn" title="Siguiente">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
+    </svg>
+  </button>
+  <button class="ctrl-btn play-pause" id="playBtn" title="Play / Pausa">
+    <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
+    </svg>
+  </button>
+  <button class="ctrl-btn" id="prevBtn" title="Anterior">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/>
+    </svg>
+  </button>
+  <button class="ctrl-btn" id="muteBtn" title="Silenciar">
+    <svg id="muteIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>
+  </button>
+  <button class="ctrl-btn" id="addBtn" title="Agregar videos" style="border-color:rgba(0,229,255,0.3); color:var(--cy);">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Thumbnail strip -->
+<div class="strip" id="strip"></div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept="video/mp4,video/*" multiple style="display:none">
+
+<script>
+const ACCENT_COLORS = ['#FF2D6B','#00E5FF','#FFE135','#A855F7','#22D3EE','#F97316'];
+
+const state = {
+  videos: [],   // { file, url, name, duration }
+  current: 0,
+  playing: false,
+  muted: false,
+};
+
+const mainVideo = document.getElementById('mainVideo');
+const segBar    = document.getElementById('segBar');
+const strip     = document.getElementById('strip');
+const infoPanel = document.getElementById('infoPanel');
+const playBtn   = document.getElementById('playBtn');
+const playIcon  = document.getElementById('playIcon');
+const muteIcon  = document.getElementById('muteIcon');
+const flash     = document.getElementById('flash');
+const noMsg     = document.getElementById('noVideoMsg');
+
+// ── LOADING SCREEN
+setTimeout(() => document.getElementById('loadScreen').classList.add('gone'), 1400);
+
+// ── FILE INPUT
+document.getElementById('addBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', e => handleFiles(Array.from(e.target.files)));
+
+// ── DRAG & DROP on body
+document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('video/'));
+  if (files.length) handleFiles(files);
+});
+
+function handleFiles(files) {
+  files.forEach(file => {
+    const url = URL.createObjectURL(file);
+    const name = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+    state.videos.push({ file, url, name, duration: 0, cat: 'Motion', year: new Date().getFullYear() });
+  });
+  buildUI();
+  if (state.videos.length === files.length) loadVideo(0); // first batch
+}
+
+// ── BUILD UI
+function buildUI() {
+  noMsg.style.display = state.videos.length ? 'none' : 'block';
+
+  // Segments
+  segBar.innerHTML = '';
+  state.videos.forEach((v, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'seg' + (i === state.current ? ' active' : i < state.current ? ' done' : '');
+    seg.innerHTML = '<div class="seg-fill"></div>';
+    seg.addEventListener('click', () => loadVideo(i));
+    segBar.appendChild(seg);
+  });
+
+  // Thumbnails
+  strip.innerHTML = '';
+  state.videos.forEach((v, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb' + (i === state.current ? ' active' : '');
+    thumb.innerHTML = `
+      <video src="${v.url}" muted preload="metadata" style="pointer-events:none;"></video>
+      <div class="thumb-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="thumb-label">${v.name}</div>
+    `;
+    // Seek thumbnail to 10%
+    const tv = thumb.querySelector('video');
+    tv.addEventListener('loadedmetadata', () => { tv.currentTime = tv.duration * 0.1; });
+    thumb.addEventListener('click', () => loadVideo(i));
+    strip.appendChild(thumb);
+  });
+
+  document.getElementById('totNum').textContent = String(state.videos.length).padStart(2,'0');
+}
+
+// ── LOAD VIDEO
+function loadVideo(i) {
+  if (!state.videos.length) return;
+  state.current = i;
+  const v = state.videos[i];
+
+  // Flash
+  flash.classList.add('show');
+  setTimeout(() => flash.classList.remove('show'), 200);
+
+  mainVideo.src = v.url;
+  mainVideo.muted = state.muted;
+
+  mainVideo.addEventListener('loadedmetadata', () => {
+    v.duration = mainVideo.duration;
+    document.getElementById('metaDur').textContent = fmtTime(v.duration);
+  }, { once: true });
+
+  mainVideo.play().then(() => {
+    state.playing = true;
+    updatePlayIcon();
+  }).catch(() => {});
+
+  updateInfo(v, i);
+  updateActiveUI(i);
+}
+
+function updateInfo(v, i) {
+  document.getElementById('infoTag').textContent = `${String(i+1).padStart(2,'0')} / ${String(state.videos.length).padStart(2,'0')}`;
+  document.getElementById('infoTitle').textContent = v.name;
+  document.getElementById('infoDesc').textContent = v.desc || 'Agrega una descripción editando el código.';
+  document.getElementById('metaYear').textContent = v.year || '—';
+  document.getElementById('metaCat').textContent = v.cat || '—';
+  document.getElementById('metaDur').textContent = v.duration ? fmtTime(v.duration) : '—';
+  document.getElementById('curNum').textContent = String(i+1).padStart(2,'0');
+  // Accent color cycle
+  document.documentElement.style.setProperty('--mg', ACCENT_COLORS[i % ACCENT_COLORS.length]);
+}
+
+function updateActiveUI(i) {
+  document.querySelectorAll('.seg').forEach((s, idx) => {
+    s.className = 'seg' + (idx === i ? ' active' : idx < i ? ' done' : '');
+  });
+  document.querySelectorAll('.thumb').forEach((t, idx) => {
+    t.className = 'thumb' + (idx === i ? ' active' : '');
+  });
+  // Scroll thumbnail into view
+  const thumbs = strip.querySelectorAll('.thumb');
+  if (thumbs[i]) thumbs[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+}
+
+// ── PROGRESS
+mainVideo.addEventListener('timeupdate', () => {
+  const seg = segBar.querySelectorAll('.seg')[state.current];
+  if (!seg || !mainVideo.duration) return;
+  const pct = (mainVideo.currentTime / mainVideo.duration) * 100;
+  seg.querySelector('.seg-fill').style.width = pct + '%';
+});
+
+// ── AUTOPLAY NEXT
+mainVideo.addEventListener('ended', () => {
+  const next = state.current + 1;
+  if (next < state.videos.length) {
+    loadVideo(next);
+  } else {
+    loadVideo(0); // loop back
+  }
+});
+
+// ── CONTROLS
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (mainVideo.paused) { mainVideo.play(); state.playing = true; }
+  else { mainVideo.pause(); state.playing = false; }
+  updatePlayIcon();
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  loadVideo((state.current + 1) % state.videos.length);
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  loadVideo((state.current - 1 + state.videos.length) % state.videos.length);
+});
+
+document.getElementById('muteBtn').addEventListener('click', () => {
+  state.muted = !state.muted;
+  mainVideo.muted = state.muted;
+  muteIcon.style.opacity = state.muted ? '0.3' : '1';
+});
+
+function updatePlayIcon() {
+  if (state.playing) {
+    playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>';
+  } else {
+    playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>';
+  }
+}
+
+// ── KEYBOARD
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'n') document.getElementById('nextBtn').click();
+  if (e.key === 'ArrowLeft'  || e.key === 'p') document.getElementById('prevBtn').click();
+  if (e.key === ' ') { e.preventDefault(); document.getElementById('playBtn').click(); }
+  if (e.key === 'm') document.getElementById('muteBtn').click();
+});
+
+// ── HIDE INFO ON IDLE
+let idleTimer;
+function resetIdle() {
+  infoPanel.classList.remove('hidden');
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => infoPanel.classList.add('hidden'), 4000);
+}
+document.addEventListener('mousemove', resetIdle);
+document.addEventListener('touchstart', resetIdle);
+resetIdle();
+
+// ── UTILS
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  const ss = Math.floor(s % 60);
+  return `${m}:${ss.toString().padStart(2,'0')}`;
+}
+</script>
+</body>
+</html>
